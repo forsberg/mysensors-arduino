@@ -29,14 +29,19 @@
  
 #include <SPI.h>
 #include <MySensor.h>  
+#include <MySigningAtsha204Soft.h>
 #include <DHT.h>  
 
 #define CHILD_ID_HUM 0
 #define CHILD_ID_TEMP 1
 #define HUMIDITY_SENSOR_DIGITAL_PIN 3
-unsigned long SLEEP_TIME = 30000; // Sleep time between reads (in milliseconds)
+unsigned long SLEEP_TIME = 300000; // Sleep time between reads (in milliseconds)
 
-MySensor gw;
+MyTransportNRF24 radio;  // NRFRF24L01 radio driver
+MyHwATMega328 hw; // Select AtMega328 hardware profile
+MySigningAtsha204Soft signer;
+
+MySensor gw(radio, hw, signer); 
 DHT dht;
 float lastTemp;
 float lastHum;
