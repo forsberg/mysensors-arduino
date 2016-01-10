@@ -1,31 +1,3 @@
-/**
- * The MySensors Arduino library handles the wireless radio link and protocol
- * between your home built sensors/actuators and HA controller of choice.
- * The sensors forms a self healing radio network with optional repeaters. Each
- * repeater and gateway builds a routing tables in EEPROM which keeps track of the
- * network topology allowing messages to be routed to nodes.
- *
- * Created by Henrik Ekblad <henrik.ekblad@mysensors.org>
- * Copyright (C) 2013-2015 Sensnology AB
- * Full contributor list: https://github.com/mysensors/Arduino/graphs/contributors
- *
- * Documentation: http://www.mysensors.org
- * Support Forum: http://forum.mysensors.org
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
- *
- *******************************
- *
- * REVISION HISTORY
- * Version 1.0 - Henrik EKblad
- * 
- * DESCRIPTION
- * This sketch provides an example how to implement a humidity/temperature
- * sensor using DHT11/DHT-22 
- * http://www.mysensors.org/build/humidity
- */
  
 #include <SPI.h>
 #include <MySensor.h>  
@@ -54,16 +26,12 @@ float lastTemp1;
 float lastHum1;
 
 boolean metric = true; 
-MyMessage msgHum0(CHILD_ID_HUM0, V_HUM);
-MyMessage msgTemp0(CHILD_ID_TEMP0, V_TEMP);
-
-MyMessage msgHum1(CHILD_ID_HUM1, V_HUM);
-MyMessage msgTemp1(CHILD_ID_TEMP1, V_TEMP);
-
-
+MyMessage msgHum(CHILD_ID_HUM0, V_HUM);
+MyMessage msgTemp(CHILD_ID_TEMP0, V_TEMP);
 
 void setup()  
 { 
+ 
   gw.begin();
   dht0.setup(HUMIDITY_SENSOR0_DIGITAL_PIN); 
   dht1.setup(HUMIDITY_SENSOR1_DIGITAL_PIN); 
@@ -91,7 +59,7 @@ void loop()
       Serial.println("Failed reading temperature from DHT0");
   } else if (temperature != lastTemp0) {
     lastTemp0 = temperature;
-    gw.send(msgTemp0.set(temperature, 1));
+    gw.send(msgTemp.setSensor(CHILD_ID_TEMP0).set(temperature, 1));
     Serial.print("T0 (inside box): ");
     Serial.println(temperature);
   }
@@ -102,7 +70,7 @@ void loop()
       Serial.println("Failed reading humidity from DHT0");
   } else if (humidity != lastHum0) {
       lastHum0 = humidity;
-      gw.send(msgHum0.set(humidity, 1));
+      gw.send(msgHum.setSensor(CHILD_ID_HUM0).set(humidity, 1));
       Serial.print("H0 (inside box): ");
       Serial.println(humidity);
   }
@@ -113,7 +81,7 @@ void loop()
       Serial.println("Failed reading temperature from DHT1");
   } else if (temperature != lastTemp1) {
     lastTemp1 = temperature;
-    gw.send(msgTemp1.set(temperature, 1));
+    gw.send(msgTemp.setSensor(CHILD_ID_TEMP1).set(temperature, 1));
     Serial.print("T1 (outside box): ");
     Serial.println(temperature);
   }
@@ -124,12 +92,10 @@ void loop()
       Serial.println("Failed reading humidity from DHT1");
   } else if (humidity != lastHum1) {
       lastHum1 = humidity;
-      gw.send(msgHum1.set(humidity, 1));
+      gw.send(msgHum.setSensor(CHILD_ID_HUM1).set(humidity, 1));
       Serial.print("H1 (outside box): ");
       Serial.println(humidity);
   }
-
-  
 
   gw.sleep(SLEEP_TIME); //sleep a bit
 }
