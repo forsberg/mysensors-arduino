@@ -26,11 +26,15 @@ float lastTemp1;
 float lastHum1;
 
 boolean metric = true; 
+boolean sentValue = false;
 MyMessage msgHum(CHILD_ID_HUM0, V_HUM);
 MyMessage msgTemp(CHILD_ID_TEMP0, V_TEMP);
 
+int oldBatteryPcnt = 0;
+
 void setup()  
 { 
+  analogReference(DEFAULT); // Use 3.3V reference
  
   gw.begin();
   dht0.setup(HUMIDITY_SENSOR0_DIGITAL_PIN); 
@@ -58,6 +62,7 @@ void loop()
   if (isnan(temperature)) {
       Serial.println("Failed reading temperature from DHT0");
   } else if (temperature != lastTemp0) {
+    sentValue = true;
     lastTemp0 = temperature;
     gw.send(msgTemp.setSensor(CHILD_ID_TEMP0).set(temperature, 1));
     Serial.print("T0 (inside box): ");
@@ -69,6 +74,7 @@ void loop()
   if (isnan(humidity)) {
       Serial.println("Failed reading humidity from DHT0");
   } else if (humidity != lastHum0) {
+      sentValue = true;    
       lastHum0 = humidity;
       gw.send(msgHum.setSensor(CHILD_ID_HUM0).set(humidity, 1));
       Serial.print("H0 (inside box): ");
@@ -80,6 +86,7 @@ void loop()
   if (isnan(temperature)) {
       Serial.println("Failed reading temperature from DHT1");
   } else if (temperature != lastTemp1) {
+    sentValue = true;    
     lastTemp1 = temperature;
     gw.send(msgTemp.setSensor(CHILD_ID_TEMP1).set(temperature, 1));
     Serial.print("T1 (outside box): ");
@@ -91,12 +98,41 @@ void loop()
   if (isnan(humidity)) {
       Serial.println("Failed reading humidity from DHT1");
   } else if (humidity != lastHum1) {
+      sentValue = true; 
       lastHum1 = humidity;
       gw.send(msgHum.setSensor(CHILD_ID_HUM1).set(humidity, 1));
       Serial.print("H1 (outside box): ");
       Serial.println(humidity);
   }
 
+  int batterySensorValue = analogRead(A0);
+  Serial.print("Battery sensor value: ");
+  Serial.println(batterySensorValue);
+
+   // 1M, 470K divider across battery and using internal ADC ref of 3.3V
+   // ((1e6+470e3)/470e3)*3.3 = Vmax = 10.32 Volts
+   // 10.32/1023 = Volts per bit = 0.010089224433768015
+   float batteryV  = batterySensorValue * 0.010089224433768015;
+   
+   float batteryVremaining = batteryV - 3.7;
+   int batteryPcnt = 100 * batteryVremaining / (4.2-3.7);   
+
+   Serial.print("Battery Voltage: ");
+   Serial.print(batteryV);
+   Serial.println(" V");
+
+   Serial.print("Battery percent: ");
+   Serial.print(batteryPcnt);
+   Serial.println(" %");
+   
+
+   if (oldBatteryPcnt != batteryPcnt && sentValue) { // Only send battery value if we already powered up radio 
+     // Power up radio after sleep
+     gw.sendBatteryLevel(batteryPcnt);
+     oldBatteryPcnt = batteryPcnt;
+   }  
+
   gw.sleep(SLEEP_TIME); //sleep a bit
+  sentValue = false;
 }
 
